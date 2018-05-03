@@ -6,6 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+export * from './column-basis-token';
 export * from './flex-styles-token';
 export * from './server-token';
 export * from './breakpoint-token';

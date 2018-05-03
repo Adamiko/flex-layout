@@ -7,8 +7,8 @@
  */
 import {InjectionToken} from '@angular/core';
 
-export const ADD_FLEX_STYLES = new InjectionToken<boolean>(
-  'Flex Layout token, should flex stylings be applied to parents automatically', {
+export const COLUMN_BASIS_ZERO = new InjectionToken<boolean>(
+  'Flex Layout token, should flex column stylings use 1e-09px as default value', {
     providedIn: 'root',
     factory: () => true
   });

@@ -20,6 +20,7 @@ import {
 import {
   ADD_FLEX_STYLES,
   BaseDirective,
+  COLUMN_BASIS_ZERO,
   MediaChange,
   MediaMonitor,
   StyleUtils,
@@ -88,7 +89,8 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
               elRef: ElementRef,
               @Optional() @SkipSelf() protected _container: LayoutDirective,
               protected styleUtils: StyleUtils,
-              @Optional() @Inject(ADD_FLEX_STYLES) protected addFlexStyles: boolean|null) {
+              @Optional() @Inject(ADD_FLEX_STYLES) protected addFlexStyles?: boolean,
+              @Optional() @Inject(COLUMN_BASIS_ZERO) protected columnBasisZero?: boolean) {
     super(monitor, elRef, styleUtils);
 
     this._cacheInput('flex', '');
@@ -208,7 +210,7 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
     };
     switch (basis || '') {
       case '':
-        basis = direction === 'row' ? '0%' : 'auto';
+        basis = direction === 'row' ? '0%' : (this.columnBasisZero ? '0.000000001px' : 'auto');
         break;
       case 'initial':   // default
       case 'nogrow':
@@ -274,8 +276,8 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
       }
     }
 
-    // Fix for issues 277 and 534
-    if (basis !== '0%') {
+    // Fix for issues 277, 534, and 728
+    if (basis !== '0%' && basis !== '0px' && basis !== '0.000000001px' && basis !== 'auto') {
       css[min] = isFixed || (isPx && grow) ? basis : null;
       css[max] = isFixed || (!usingCalc && shrink) ? basis : null;
     }

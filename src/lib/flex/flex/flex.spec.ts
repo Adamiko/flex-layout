@@ -17,6 +17,7 @@ import {
   MockMatchMediaProvider,
   SERVER_TOKEN,
   StyleUtils,
+  COLUMN_BASIS_ZERO,
 } from '@angular/flex-layout/core';
 
 import {FlexLayoutModule} from '../../module';
@@ -196,6 +197,44 @@ describe('flex directive', () => {
       expectEl(element).not.toHaveStyle({'min-width': '30px'}, styler);
     });
 
+
+    it('should work fxLayout parents default in column mode', () => {
+      componentWithTemplate(`
+        <div fxLayout='column' class='test'>
+          <div fxFlex>  </div>
+        </div>
+      `);
+      fixture.detectChanges();
+      let parent = queryFor(fixture, '.test')[0];
+      let element = queryFor(fixture, '[fxFlex]')[0];
+
+      // parent flex-direction found with 'column' with child height styles
+      expectEl(parent).toHaveStyle({'flex-direction': 'column', 'display': 'flex'}, styler);
+
+      if (platform.BLINK) {
+        expectEl(element).toHaveStyle({
+          'flex': '1 1 1e-09px',
+          'box-sizing': 'border-box',
+        }, styler);
+      } else if (platform.FIREFOX) {
+        expectEl(element).toHaveStyle({
+          'flex': '1 1 1e-9px',
+          'box-sizing': 'border-box',
+        }, styler);
+      } else if (platform.EDGE) {
+        expectEl(element).toHaveStyle({
+          'flex': '1 1 0px',
+          'box-sizing': 'border-box',
+        }, styler);
+      } else {
+        expectEl(element).toHaveStyle({
+          'flex': '1 1 0.000000001px',
+          'box-sizing': 'border-box',
+        }, styler);
+      }
+    });
+
+
     it('should CSS stylesheet and not inject flex-direction on parent', () => {
       componentWithTemplate(`
         <style>
@@ -219,7 +258,7 @@ describe('flex directive', () => {
       }
     });
 
-    it('should not work with non-direct-parent fxLayouts', async(() => {
+    it('should work with non-direct-parent fxLayouts', async(() => {
       componentWithTemplate(`
         <div fxLayout='column'>
           <div class='test'>
@@ -235,7 +274,7 @@ describe('flex directive', () => {
         // The parent flex-direction not found;
         // A flex-direction should have been auto-injected to the parent...
         // fallback to 'row' and set child width styles accordingly
-        expectEl(parent).not.toHaveStyle({'flex-direction': 'row'}, styler);
+        expectEl(parent).toHaveStyle({'flex-direction': 'row'}, styler);
         expectEl(element).toHaveStyle({'min-width': '40px'}, styler);
         expectEl(element).not.toHaveStyle({'min-height': '40px'}, styler);
       });
@@ -758,11 +797,39 @@ describe('flex directive', () => {
         // The parent flex-direction not found;
         // A flex-direction should have been auto-injected to the parent...
         // fallback to 'row' and set child width styles accordingly
-        expectEl(parent).not.toHaveStyle({'-webkit-flex-direction': 'row'}, styler);
+        expect(parent.nativeElement.getAttribute('style')).not.toContain('-webkit-flex-direction');
         expectEl(element).toHaveStyle({'min-width': '40px'}, styler);
         expectEl(element).not.toHaveStyle({'min-height': '40px'}, styler);
       });
 
+    }));
+  });
+
+  describe('with column basis zero disabled', () => {
+    beforeEach(() => {
+      jasmine.addMatchers(customMatchers);
+
+      // Configure testbed to prepare services
+      TestBed.configureTestingModule({
+        imports: [CommonModule, FlexLayoutModule],
+        declarations: [TestFlexComponent, TestQueryWithFlexComponent],
+        providers: [
+          MockMatchMediaProvider,
+          {provide: SERVER_TOKEN, useValue: true},
+          {provide: COLUMN_BASIS_ZERO, useValue: false},
+        ]
+      });
+    });
+
+    it('should set flex basis to auto', async(() => {
+      componentWithTemplate(`
+        <div fxLayout='column'>
+          <div fxFlex></div>
+        </div>
+      `);
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectEl(element).toHaveStyle({'flex': '1 1 auto'}, styler);
     }));
   });
 
